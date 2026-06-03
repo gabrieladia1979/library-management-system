@@ -1,0 +1,27 @@
+[project]
+name = "bibliotech"
+version = "1.0.0"
+description = "Sistema de Gestión de Biblioteca — TPO Calidad de Software"
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+markers = [
+    "unit: Unit tests (services layer)",
+    "integration: Integration tests (API endpoints)",
+    "system: System/E2E tests (full workflows)",
+]
