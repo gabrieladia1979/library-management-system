@@ -139,7 +139,7 @@ pip install -r requirements.txt
 ### 4. Inicializar la base de datos con datos de prueba
 
 ```bash
-python -m app.seed_db
+python -m app.db.seed
 ```
 
 > **Nota:** Este comando crea la base de datos SQLite y la puebla con datos de ejemplo para facilitar las pruebas iniciales.
@@ -168,21 +168,22 @@ Una vez que el servidor esté en ejecución, puedes interactuar con la API de la
 
 ```bash
 # Obtener todos los libros
-curl -X GET http://localhost:8000/api/v1/libros
+curl -X GET http://localhost:8000/api/v1/books
 
 # Crear un nuevo libro
-curl -X POST http://localhost:8000/api/v1/libros \
+curl -X POST http://localhost:8000/api/v1/books \
   -H "Content-Type: application/json" \
   -d '{
-    "titulo": "Cien años de soledad",
-    "autor": "Gabriel García Márquez",
+    "title": "Cien años de soledad",
+    "author": "Gabriel García Márquez",
     "isbn": "978-0-06-088328-7",
-    "genero": "Realismo mágico",
-    "anio_publicacion": 1967
+    "genre": "Realismo mágico",
+    "published_year": 1967,
+    "quantity": 4
   }'
 
 # Buscar libros por autor
-curl -X GET "http://localhost:8000/api/v1/libros?autor=García%20Márquez"
+curl -X GET "http://localhost:8000/api/v1/books?search=García%20Márquez"
 ```
 
 ---
@@ -263,58 +264,42 @@ bibliotech/
 ├── app/
 │   ├── __init__.py
 │   ├── main.py                     # Punto de entrada de la aplicación
-│   ├── config.py                   # Configuración general
-│   ├── database.py                 # Configuración de la base de datos
-│   ├── seed_db.py                  # Script de carga de datos iniciales
+│   ├── api/
+│   │   └── v1/
+│   │       ├── router.py           # Enrutador principal de la API
+│   │       └── endpoints/
+│   │           ├── books.py        # Endpoints de Libros
+│   │           ├── loans.py        # Endpoints de Préstamos
+│   │           └── users.py        # Endpoints de Usuarios
+│   ├── core/
+│   │   └── config.py               # Configuración general
+│   ├── db/
+│   │   ├── database.py             # Configuración de la base de datos
+│   │   └── seed.py                 # Script de carga de datos iniciales
 │   ├── models/
-│   │   ├── __init__.py
-│   │   ├── libro.py                # Modelo ORM de Libro
-│   │   ├── usuario.py              # Modelo ORM de Usuario
-│   │   └── prestamo.py             # Modelo ORM de Préstamo
+│   │   ├── book.py                 # Modelo ORM de Libro
+│   │   ├── loan.py                 # Modelo ORM de Préstamo
+│   │   └── user.py                 # Modelo ORM de Usuario
 │   ├── schemas/
-│   │   ├── __init__.py
-│   │   ├── libro.py                # Esquemas Pydantic de Libro
-│   │   ├── usuario.py              # Esquemas Pydantic de Usuario
-│   │   └── prestamo.py             # Esquemas Pydantic de Préstamo
-│   ├── routers/
-│   │   ├── __init__.py
-│   │   ├── libros.py               # Endpoints de Libros
-│   │   ├── usuarios.py             # Endpoints de Usuarios
-│   │   └── prestamos.py            # Endpoints de Préstamos
+│   │   ├── book.py                 # Esquemas Pydantic de Libro
+│   │   ├── loan.py                 # Esquemas Pydantic de Préstamo
+│   │   └── user.py                 # Esquemas Pydantic de Usuario
 │   └── services/
-│       ├── __init__.py
-│       ├── libro_service.py        # Lógica de negocio de Libros
-│       ├── usuario_service.py      # Lógica de negocio de Usuarios
-│       └── prestamo_service.py     # Lógica de negocio de Préstamos
+│       ├── book_service.py         # Lógica de negocio de Libros
+│       ├── loan_service.py         # Lógica de negocio de Préstamos
+│       └── user_service.py         # Lógica de negocio de Usuarios
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py                 # Fixtures compartidos
-│   ├── unit/
-│   │   ├── __init__.py
-│   │   ├── test_libro_service.py
-│   │   ├── test_usuario_service.py
-│   │   └── test_prestamo_service.py
-│   ├── integration/
-│   │   ├── __init__.py
-│   │   ├── test_libro_repo.py
-│   │   ├── test_usuario_repo.py
-│   │   └── test_prestamo_repo.py
-│   └── system/
-│       ├── __init__.py
-│       ├── test_libros_api.py
-│       ├── test_usuarios_api.py
-│       └── test_prestamos_api.py
+│   ├── unit/                       # Pruebas unitarias
+│   ├── integration/                # Pruebas de integración
+│   └── system/                     # Pruebas de sistema
 ├── docs/
 │   ├── plan_de_pruebas.md          # Plan de pruebas del proyecto
-│   ├── casos_de_prueba.md          # Casos de prueba detallados
-│   ├── reporte_calidad.md          # Reporte de calidad del software
-│   └── arquitectura.md             # Documentación de arquitectura
-├── .gitignore
-├── pyproject.toml                  # Configuración del proyecto y herramientas
+│   └── ...                         # Otros documentos de calidad
 ├── requirements.txt                # Dependencias del proyecto
-├── pytest.ini                      # Configuración de PyTest
-├── README.md                       # Este archivo
-└── LICENSE                         # Licencia MIT
+├── pyproject.toml                  # Configuración de herramientas
+└── README.md                       # Este archivo
 ```
 
 ---
@@ -325,31 +310,31 @@ bibliotech/
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `GET` | `/api/v1/libros` | Obtener todos los libros (con filtros opcionales). |
-| `GET` | `/api/v1/libros/{id}` | Obtener un libro por su ID. |
-| `POST` | `/api/v1/libros` | Crear un nuevo libro. |
-| `PUT` | `/api/v1/libros/{id}` | Actualizar un libro existente. |
-| `DELETE` | `/api/v1/libros/{id}` | Eliminar un libro del catálogo. |
+| `GET` | `/api/v1/books` | Obtener todos los libros (con filtros opcionales). |
+| `GET` | `/api/v1/books/{id}` | Obtener un libro por su ID. |
+| `POST` | `/api/v1/books` | Crear un nuevo libro. |
+| `PUT` | `/api/v1/books/{id}` | Actualizar un libro existente. |
+| `DELETE` | `/api/v1/books/{id}` | Eliminar un libro del catálogo. |
 
 ### 👥 Usuarios
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `GET` | `/api/v1/usuarios` | Obtener todos los usuarios registrados. |
-| `GET` | `/api/v1/usuarios/{id}` | Obtener un usuario por su ID. |
-| `POST` | `/api/v1/usuarios` | Registrar un nuevo usuario. |
-| `PUT` | `/api/v1/usuarios/{id}` | Actualizar la información de un usuario. |
-| `DELETE` | `/api/v1/usuarios/{id}` | Eliminar un usuario del sistema. |
+| `GET` | `/api/v1/users` | Obtener todos los usuarios registrados. |
+| `GET` | `/api/v1/users/{id}` | Obtener un usuario por su ID. |
+| `POST` | `/api/v1/users` | Registrar un nuevo usuario. |
+| `PUT` | `/api/v1/users/{id}` | Actualizar la información de un usuario. |
+| `DELETE` | `/api/v1/users/{id}` | Eliminar un usuario del sistema. |
 
 ### 📖 Préstamos
 
 | Método | Endpoint | Descripción |
 |---|---|---|
-| `GET` | `/api/v1/prestamos` | Obtener todos los préstamos. |
-| `GET` | `/api/v1/prestamos/{id}` | Obtener un préstamo por su ID. |
-| `POST` | `/api/v1/prestamos` | Registrar un nuevo préstamo. |
-| `PUT` | `/api/v1/prestamos/{id}` | Actualizar un préstamo (ej: marcar devolución). |
-| `DELETE` | `/api/v1/prestamos/{id}` | Eliminar un registro de préstamo. |
+| `GET` | `/api/v1/loans` | Obtener todos los préstamos. |
+| `GET` | `/api/v1/loans/{id}` | Obtener un préstamo por su ID. |
+| `POST` | `/api/v1/loans` | Registrar un nuevo préstamo. |
+| `PUT` | `/api/v1/loans/{id}` | Actualizar un préstamo (ej: marcar devolución). |
+| `DELETE` | `/api/v1/loans/{id}` | Eliminar un registro de préstamo. |
 
 ---
 
@@ -370,10 +355,10 @@ El directorio `docs/` contiene toda la documentación del proyecto relacionada c
 
 | Nombre | Rol | Contacto |
 |---|---|---|
-| **Nombre Apellido** | Líder de Proyecto / Backend Developer | [email@universidad.edu](mailto:email@universidad.edu) |
-| **Nombre Apellido** | QA Engineer / Tester | [email@universidad.edu](mailto:email@universidad.edu) |
-| **Nombre Apellido** | Backend Developer / DevOps | [email@universidad.edu](mailto:email@universidad.edu) |
-| **Nombre Apellido** | Documentación / QA Analyst | [email@universidad.edu](mailto:email@universidad.edu) |
+| **Gabriel Adia** | Developer | [gadia@uade.edu.ar](mailto:gadia@uade.edu.ar) |
+| **Tomas Basualdo** | Developer | [tbasualdo@uade.edu.ar](mailto:tbasualdo@uade.edu.ar) |
+| **Lucas Bustamante** | Developer / PM | [lucabustamante@uade.edu.ar](mailto:lucabustamante@uade.edu.ar) |
+| **Lautaro Casalini** | Developer | [lcasalini@uade.edu.ar](mailto:lcasalini@uade.edu.ar) |
 
 > 📧 Para consultas sobre el proyecto, contactar al equipo a través de los correos institucionales.
 
@@ -410,5 +395,5 @@ SOFTWARE.
 ---
 
 <p align="center">
-  Hecho con ❤️ para la cátedra de <strong>Calidad de Software</strong> — Universidad 2026
+  Hecho con ❤️ para la materia <strong>Calidad de Software</strong> — UADE 2026
 </p>
