@@ -18,6 +18,7 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 @pytest.fixture(scope="function")
 def db_session():
     """Create a fresh database session for each test."""
@@ -29,9 +30,11 @@ def db_session():
         session.close()
         Base.metadata.drop_all(bind=engine)
 
+
 @pytest.fixture(scope="function")
 def client(db_session):
     """FastAPI TestClient with overridden DB dependency."""
+
     def override_get_db():
         try:
             yield db_session
@@ -42,6 +45,7 @@ def client(db_session):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
+
 
 @pytest.fixture
 def sample_book():
@@ -56,6 +60,7 @@ def sample_book():
         "description": "A handbook of agile software craftsmanship.",
     }
 
+
 @pytest.fixture
 def sample_user():
     """Sample user data for tests."""
@@ -64,11 +69,13 @@ def sample_user():
         "email": "maria.gonzalez@email.com",
     }
 
+
 @pytest.fixture
 def created_book(client, sample_book):
     """Create and return a book via API."""
     response = client.post("/api/v1/books/", json=sample_book)
     return response.json()
+
 
 @pytest.fixture
 def created_user(client, sample_user):

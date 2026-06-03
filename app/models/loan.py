@@ -13,9 +13,7 @@ class Loan(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
     loan_date = Column(DateTime, default=lambda: datetime.now(UTC))
-    due_date = Column(
-        DateTime, default=lambda: datetime.now(UTC) + timedelta(days=14)
-    )
+    due_date = Column(DateTime, default=lambda: datetime.now(UTC) + timedelta(days=14))
     return_date = Column(DateTime, nullable=True)
     status = Column(String(20), default="active")  # active, returned, overdue
 

@@ -22,6 +22,7 @@ def create_book(db: Session, book_data: BookCreate) -> Book:
     db.refresh(book)
     return book
 
+
 def get_books(
     db: Session,
     search: str | None = None,
@@ -40,6 +41,7 @@ def get_books(
         query = query.filter(Book.available_copies > 0)
     return query.order_by(Book.title).all()
 
+
 def get_book(db: Session, book_id: int) -> Book:
     """Get a single book by ID. Raises 404 if not found."""
     book = db.query(Book).filter(Book.id == book_id).first()
@@ -49,6 +51,7 @@ def get_book(db: Session, book_id: int) -> Book:
             detail=f"Book with ID {book_id} not found.",
         )
     return book
+
 
 def update_book(db: Session, book_id: int, book_data: BookUpdate) -> Book:
     """Update a book partially. Raises 404 if not found."""
@@ -65,6 +68,7 @@ def update_book(db: Session, book_id: int, book_data: BookUpdate) -> Book:
     db.commit()
     db.refresh(book)
     return book
+
 
 def delete_book(db: Session, book_id: int) -> None:
     """Delete a book. Raises 409 if it has active loans."""

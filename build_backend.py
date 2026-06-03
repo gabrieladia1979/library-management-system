@@ -16,7 +16,6 @@ FILES = {
     "tests/unit/__init__.py": "",
     "tests/integration/__init__.py": "",
     "tests/system/__init__.py": "",
-
     "app/core/config.py": """from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -755,7 +754,7 @@ def seed_database():
 
 if __name__ == "__main__":
     seed_database()
-"""
+""",
 }
 
 for rel_path, content in FILES.items():

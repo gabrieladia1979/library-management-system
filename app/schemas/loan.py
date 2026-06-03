@@ -7,6 +7,7 @@ class LoanCreate(BaseModel):
     user_id: int
     book_id: int
 
+
 class LoanRead(BaseModel):
     id: int
     user_id: int

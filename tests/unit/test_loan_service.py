@@ -19,8 +19,16 @@ class TestLoanService:
         db_session.refresh(user)
         return user
 
-    def _create_book(self, db_session, title="Test Book", isbn="1234567890", quantity=2):
-        book = Book(title=title, author="Author", isbn=isbn, quantity=quantity, available_copies=quantity)
+    def _create_book(
+        self, db_session, title="Test Book", isbn="1234567890", quantity=2
+    ):
+        book = Book(
+            title=title,
+            author="Author",
+            isbn=isbn,
+            quantity=quantity,
+            available_copies=quantity,
+        )
         db_session.add(book)
         db_session.commit()
         db_session.refresh(book)

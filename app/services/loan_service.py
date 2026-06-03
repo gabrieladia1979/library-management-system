@@ -57,6 +57,7 @@ def borrow_book(db: Session, user_id: int, book_id: int) -> Loan:
     db.refresh(loan)
     return loan
 
+
 def return_book(db: Session, loan_id: int) -> Loan:
     """Return a borrowed book. Raises 404/409 if loan not found or already returned."""
     loan = db.query(Loan).filter(Loan.id == loan_id).first()
@@ -78,6 +79,7 @@ def return_book(db: Session, loan_id: int) -> Loan:
     db.refresh(loan)
     return loan
 
+
 def get_loans(
     db: Session,
     status_filter: str | None = None,
@@ -94,13 +96,12 @@ def get_loans(
         query = query.filter(Loan.book_id == book_id)
     return query.order_by(Loan.loan_date.desc()).all()
 
+
 def check_overdue_loans(db: Session) -> int:
     """Update status of overdue loans. Returns count of newly overdue loans."""
     now = datetime.now(UTC)
     overdue_loans = (
-        db.query(Loan)
-        .filter(Loan.status == "active", Loan.due_date < now)
-        .all()
+        db.query(Loan).filter(Loan.status == "active", Loan.due_date < now).all()
     )
     for loan in overdue_loans:
         loan.status = "overdue"

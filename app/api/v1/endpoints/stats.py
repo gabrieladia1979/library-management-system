@@ -10,6 +10,7 @@ from app.schemas.stats import DashboardStats
 
 router = APIRouter(prefix="/stats", tags=["statistics"])
 
+
 @router.get("/dashboard", response_model=DashboardStats)
 def get_dashboard_stats(db: Session = Depends(get_db)):
     """Get dashboard statistics."""

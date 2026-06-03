@@ -19,6 +19,7 @@ def create_user(db: Session, user_data: UserCreate) -> User:
     db.refresh(user)
     return user
 
+
 def get_users(db: Session, search: str | None = None) -> list[User]:
     """Get all users with optional search filter."""
     query = db.query(User)
@@ -27,6 +28,7 @@ def get_users(db: Session, search: str | None = None) -> list[User]:
             (User.name.ilike(f"%{search}%")) | (User.email.ilike(f"%{search}%"))
         )
     return query.order_by(User.name).all()
+
 
 def get_user(db: Session, user_id: int) -> User:
     """Get a single user by ID. Raises 404 if not found."""
@@ -38,6 +40,7 @@ def get_user(db: Session, user_id: int) -> User:
         )
     return user
 
+
 def update_user(db: Session, user_id: int, user_data: UserUpdate) -> User:
     """Update a user partially. Raises 404 if not found."""
     user = get_user(db, user_id)
@@ -47,6 +50,7 @@ def update_user(db: Session, user_id: int, user_data: UserUpdate) -> User:
     db.commit()
     db.refresh(user)
     return user
+
 
 def deactivate_user(db: Session, user_id: int) -> User:
     """Deactivate a user. Raises 409 if user has active loans."""

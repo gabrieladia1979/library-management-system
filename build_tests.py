@@ -691,7 +691,7 @@ class TestWorkflows:
 
         response = client.put(f"/api/v1/users/{user['id']}/deactivate")
         assert response.status_code == 409
-"""
+""",
 }
 
 for rel_path, content in FILES.items():

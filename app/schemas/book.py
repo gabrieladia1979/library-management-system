@@ -12,6 +12,7 @@ class BookCreate(BaseModel):
     quantity: int = Field(default=1, ge=1)
     description: str | None = None
 
+
 class BookRead(BaseModel):
     id: int
     title: str
@@ -25,6 +26,7 @@ class BookRead(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
 
 class BookUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
