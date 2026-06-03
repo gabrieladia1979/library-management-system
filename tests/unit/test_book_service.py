@@ -1,9 +1,9 @@
 import pytest
 from fastapi import HTTPException
 
-from app.models.book import Book
 from app.schemas.book import BookCreate, BookUpdate
 from app.services import book_service
+
 
 @pytest.mark.unit
 class TestBookService:

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db.dependencies import get_db
@@ -6,7 +7,6 @@ from app.models.book import Book
 from app.models.loan import Loan
 from app.models.user import User
 from app.schemas.stats import DashboardStats
-from sqlalchemy import func
 
 router = APIRouter(prefix="/stats", tags=["statistics"])
 

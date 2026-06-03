@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 
+
 def create_user(db: Session, user_data: UserCreate) -> User:
     """Create a new user. Raises 409 if email already exists."""
     existing = db.query(User).filter(User.email == user_data.email).first()
@@ -50,7 +51,7 @@ def update_user(db: Session, user_id: int, user_data: UserUpdate) -> User:
 def deactivate_user(db: Session, user_id: int) -> User:
     """Deactivate a user. Raises 409 if user has active loans."""
     user = get_user(db, user_id)
-    active_loans = [l for l in user.loans if l.status == "active"]
+    active_loans = [loan for loan in user.loans if loan.status == "active"]
     if active_loans:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

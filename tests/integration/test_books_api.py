@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.integration
 class TestBooksAPI:
     """Integration tests for the books API endpoints."""

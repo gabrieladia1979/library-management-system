@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.system
 class TestWorkflows:
     """System tests for end-to-end user workflows."""

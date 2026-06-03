@@ -1,12 +1,13 @@
 """Seed the database with sample data for development/demo."""
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.db.database import SessionLocal, engine, Base
+from app.db.database import Base, SessionLocal, engine
 from app.models.book import Book
-from app.models.user import User
 from app.models.loan import Loan
+from app.models.user import User
+
 
 def seed_database():
     """Populate the database with sample books, users, and loans."""
@@ -67,7 +68,7 @@ def seed_database():
     db.flush()
 
     # Sample active loans
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     loans = [
         Loan(user_id=users[0].id, book_id=books[0].id,
              loan_date=now - timedelta(days=5), due_date=now + timedelta(days=9)),

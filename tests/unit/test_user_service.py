@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from app.schemas.user import UserCreate, UserUpdate
 from app.services import user_service
 
+
 @pytest.mark.unit
 class TestUserService:
     """Unit tests for user service functions."""

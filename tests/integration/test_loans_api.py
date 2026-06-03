@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.integration
 class TestLoansAPI:
     """Integration tests for the loans API endpoints."""

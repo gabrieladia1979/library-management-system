@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.integration
 class TestUsersAPI:
     """Integration tests for the users API endpoints."""

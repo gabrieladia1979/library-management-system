@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+
 class LoanCreate(BaseModel):
     user_id: int
     book_id: int

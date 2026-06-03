@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.db.database import Base
+
 
 class Book(Base):
     __tablename__ = "books"
@@ -17,6 +18,6 @@ class Book(Base):
     quantity = Column(Integer, default=1)
     available_copies = Column(Integer, default=1)
     description = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
     loans = relationship("Loan", back_populates="book", cascade="all, delete-orphan")

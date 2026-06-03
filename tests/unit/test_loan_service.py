@@ -1,11 +1,12 @@
+from datetime import UTC, datetime, timedelta
+
 import pytest
-from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException
 
 from app.models.book import Book
 from app.models.user import User
-from app.models.loan import Loan
 from app.services import loan_service
+
 
 @pytest.mark.unit
 class TestLoanService:
@@ -109,7 +110,7 @@ class TestLoanService:
         book = self._create_book(db_session)
         loan = loan_service.borrow_book(db_session, user.id, book.id)
         # Manually set due date to the past
-        loan.due_date = datetime.now(timezone.utc) - timedelta(days=1)
+        loan.due_date = datetime.now(UTC) - timedelta(days=1)
         db_session.commit()
         count = loan_service.check_overdue_loans(db_session)
         assert count == 1

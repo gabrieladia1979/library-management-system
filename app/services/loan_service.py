@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.book import Book
 from app.models.loan import Loan
 from app.models.user import User
+
 
 def borrow_book(db: Session, user_id: int, book_id: int) -> Loan:
     """Create a new loan. Validates user exists, book exists, and copies available."""
@@ -71,7 +72,7 @@ def return_book(db: Session, loan_id: int) -> Loan:
         )
 
     loan.status = "returned"
-    loan.return_date = datetime.now(timezone.utc)
+    loan.return_date = datetime.now(UTC)
     loan.book.available_copies += 1
     db.commit()
     db.refresh(loan)
@@ -95,7 +96,7 @@ def get_loans(
 
 def check_overdue_loans(db: Session) -> int:
     """Update status of overdue loans. Returns count of newly overdue loans."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     overdue_loans = (
         db.query(Loan)
         .filter(Loan.status == "active", Loan.due_date < now)

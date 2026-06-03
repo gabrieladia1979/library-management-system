@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models.book import Book
 from app.schemas.book import BookCreate, BookUpdate
 
+
 def create_book(db: Session, book_data: BookCreate) -> Book:
     """Create a new book. Raises 409 if ISBN already exists."""
     existing = db.query(Book).filter(Book.isbn == book_data.isbn).first()
@@ -68,7 +69,7 @@ def update_book(db: Session, book_id: int, book_data: BookUpdate) -> Book:
 def delete_book(db: Session, book_id: int) -> None:
     """Delete a book. Raises 409 if it has active loans."""
     book = get_book(db, book_id)
-    active_loans = [l for l in book.loans if l.status == "active"]
+    active_loans = [loan for loan in book.loans if loan.status == "active"]
     if active_loans:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
