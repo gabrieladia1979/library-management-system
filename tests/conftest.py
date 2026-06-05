@@ -70,15 +70,32 @@ def sample_user():
     }
 
 
+@pytest.fixture(scope="function")
+def auth_token(client):
+    """Get a valid JWT token for tests."""
+    response = client.post(
+        "/api/v1/auth/login",
+        data={"username": "admin", "password": "admin123"},
+    )
+    return response.json()["access_token"]
+
+
+@pytest.fixture(scope="function")
+def auth_client(client, auth_token):
+    """Client with Authorization header."""
+    client.headers = {**client.headers, "Authorization": f"Bearer {auth_token}"}
+    return client
+
+
 @pytest.fixture
-def created_book(client, sample_book):
+def created_book(auth_client, sample_book):
     """Create and return a book via API."""
-    response = client.post("/api/v1/books/", json=sample_book)
+    response = auth_client.post("/api/v1/books/", json=sample_book)
     return response.json()
 
 
 @pytest.fixture
-def created_user(client, sample_user):
+def created_user(auth_client, sample_user):
     """Create and return a user via API."""
-    response = client.post("/api/v1/users/", json=sample_user)
+    response = auth_client.post("/api/v1/users/", json=sample_user)
     return response.json()
