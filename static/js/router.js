@@ -48,7 +48,25 @@ export class Router {
     }
 
     async handleRoute() {
-        const match = this.matchRoute(window.location.hash);
+        const hash = window.location.hash;
+        const path = hash.replace('#', '') || '';
+        
+        // Import api here to check authentication
+        const { api } = await import('./services/api.js');
+        
+        // Navigation Guard: Redirect to login if not authenticated and trying to access private route
+        if (path !== 'login' && !api.isAuthenticated()) {
+            window.location.hash = '#login';
+            return;
+        }
+
+        // Redirect to dashboard if authenticated and trying to access login
+        if (path === 'login' && api.isAuthenticated()) {
+            window.location.hash = '#';
+            return;
+        }
+
+        const match = this.matchRoute(hash);
         
         // Add fade out
         this.mainContainer.style.opacity = '0';

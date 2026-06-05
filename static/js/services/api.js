@@ -1,6 +1,19 @@
 const BASE_URL = '/api/v1';
 
 class ApiService {
+    constructor() {
+        this.token = localStorage.getItem('token');
+    }
+
+    setToken(token) {
+        this.token = token;
+        if (token) {
+            localStorage.setItem('token', token);
+        } else {
+            localStorage.removeItem('token');
+        }
+    }
+
     async request(endpoint, options = {}) {
         const url = `${BASE_URL}${endpoint}`;
         
@@ -10,15 +23,30 @@ class ApiService {
             },
         };
 
-        const finalOptions = { ...defaultOptions, ...options };
+        if (this.token) {
+            defaultOptions.headers['Authorization'] = `Bearer ${this.token}`;
+        }
 
-        if (finalOptions.body && typeof finalOptions.body === 'object') {
+        const finalOptions = { ...defaultOptions, ...options };
+        
+        // Merge headers if they exist in options
+        if (options.headers) {
+            finalOptions.headers = { ...defaultOptions.headers, ...options.headers };
+        }
+
+        if (finalOptions.body && typeof finalOptions.body === 'object' && !(finalOptions.body instanceof FormData)) {
             finalOptions.body = JSON.stringify(finalOptions.body);
         }
 
         try {
             const response = await fetch(url, finalOptions);
             
+            if (response.status === 401) {
+                this.setToken(null);
+                window.location.hash = '#/login';
+                throw new Error('Sesión expirada o no autorizada');
+            }
+
             // Handle 204 No Content
             if (response.status === 204) {
                 return null;
@@ -33,9 +61,42 @@ class ApiService {
             return data;
         } catch (error) {
             console.error('API Error:', error);
-            window.toast?.show(error.message, 'error');
+            if (error.message !== 'Sesión expirada o no autorizada') {
+                window.toast?.show(error.message, 'error');
+            }
             throw error;
         }
+    }
+
+    async login(username, password) {
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('password', password);
+
+        // OAuth2 login expects application/x-www-form-urlencoded or multipart/form-data
+        // fetch with FormData automatically sets the correct Content-Type
+        const response = await fetch(`${BASE_URL}/auth/login`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Error al iniciar sesión');
+        }
+
+        this.setToken(data.access_token);
+        return data;
+    }
+
+    logout() {
+        this.setToken(null);
+        window.location.hash = '#/login';
+    }
+
+    isAuthenticated() {
+        return !!this.token;
     }
 
     // Books
