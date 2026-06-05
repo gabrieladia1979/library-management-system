@@ -63,7 +63,9 @@ class TestLoansAPI:
         assert data["status"] == "returned"
         assert data["return_date"] is not None
 
-    def test_return_book_already_returned(self, auth_client, created_book, created_user):
+    def test_return_book_already_returned(
+        self, auth_client, created_book, created_user
+    ):
         loan = auth_client.post(
             "/api/v1/loans/",
             json={"user_id": created_user["id"], "book_id": created_book["id"]},

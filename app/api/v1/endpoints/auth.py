@@ -14,13 +14,17 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     if expires_delta:
-        from datetime import datetime, timezone
-        expire = datetime.now(timezone.utc) + expires_delta
+        from datetime import UTC, datetime
+
+        expire = datetime.now(UTC) + expires_delta
     else:
-        from datetime import datetime, timezone
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        from datetime import UTC, datetime
+
+        expire = datetime.now(UTC) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
 
 
@@ -38,7 +42,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
             ),
             "token_type": "bearer",
         }
-    
+
     throw_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Incorrect username or password",
