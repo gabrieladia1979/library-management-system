@@ -219,6 +219,31 @@ pytest --cov=app --cov-report=html --cov-report=term-missing
 
 > El reporte HTML de cobertura se genera en el directorio `htmlcov/`. Ábrelo en tu navegador para explorar la cobertura línea por línea.
 
+### Visualización de Métricas y Reportes por Niveles
+
+Se ha integrado un script personalizado [visualize_tests.py](file:///C:/Users/lauta/Desktop/Facultad/Calidad%20de%20Software/TPO/Github/library-management-system/visualize_tests.py) que ejecuta la suite de pruebas, recopila métricas de calidad y rendimiento agrupadas por niveles (Unitario, Integración y Sistema), y genera un reporte HTML interactivo además de un resumen estructurado en la consola.
+
+Para ejecutar y abrir el reporte interactivo en su navegador:
+
+```bash
+python visualize_tests.py
+```
+
+También puede filtrar la ejecución por niveles o por pruebas específicas pasando argumentos estándar de PyTest al script:
+
+```bash
+# Ejecutar y ver métricas solo de pruebas unitarias
+python visualize_tests.py -m unit
+
+# Ejecutar y ver métricas para un test específico por palabra clave
+python visualize_tests.py -k test_login
+
+# Ejecutar las pruebas sin abrir el navegador automáticamente (ideal para entornos CI/CD)
+python visualize_tests.py --no-open
+```
+
+El reporte se guardará de forma local en `reports/test_report.html`.
+
 ### Resumen de la estrategia de testing
 
 | Nivel | Marcador | Descripción | Cantidad |
