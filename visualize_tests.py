@@ -25,21 +25,23 @@ from pathlib import Path
 import pytest
 
 # Configurar encoding utf-8 para la salida estándar si es posible en Windows
-if sys.platform.startswith('win'):
+if sys.platform.startswith("win"):
     with contextlib.suppress(AttributeError):
-        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stdout.reconfigure(encoding="utf-8")
+
 
 # Códigos de color ANSI para una consola atractiva
 class Colors:
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
 
 def color_text(text, color_code, bold=False):
     """Aplica formato de color si la salida es una consola interactiva."""
@@ -48,8 +50,10 @@ def color_text(text, color_code, bold=False):
         return f"{prefix}{color_code}{text}{Colors.ENDC}"
     return text
 
+
 class TestMetricsCollector:
     """Plugin de Pytest para recolectar datos de las pruebas durante su ejecución."""
+
     def __init__(self):
         self.tests = []
         self.start_time = 0.0
@@ -66,7 +70,11 @@ class TestMetricsCollector:
     def pytest_runtest_logreport(self, report):
         # Solo recolectamos resultados en la fase 'call' (ejecución real del test),
         # o si la fase 'setup' o 'teardown' falló (lo que genera un error/fail)
-        if report.when == 'call' or report.when in ('setup', 'teardown') and report.outcome != 'passed':
+        if (
+            report.when == "call"
+            or report.when in ("setup", "teardown")
+            and report.outcome != "passed"
+        ):
             self._add_report(report)
 
     def _add_report(self, report):
@@ -93,13 +101,13 @@ class TestMetricsCollector:
         if test_class:
             display_name = f"{test_class} -> {display_name}"
 
-        outcome = report.outcome # 'passed', 'failed', 'skipped'
+        outcome = report.outcome  # 'passed', 'failed', 'skipped'
 
         # Si ya existe el test en la lista (ej: falló en setup y luego reporta algo más), lo actualizamos
         existing = next((t for t in self.tests if t["nodeid"] == nodeid), None)
 
         error_msg = ""
-        if report.failed and hasattr(report, 'longrepr') and report.longrepr:
+        if report.failed and hasattr(report, "longrepr") and report.longrepr:
             error_msg = str(report.longrepr)
 
         test_data = {
@@ -109,12 +117,12 @@ class TestMetricsCollector:
             "file": file_path,
             "level": level,
             "outcome": outcome,
-            "duration": getattr(report, 'duration', 0.0),
-            "error": error_msg
+            "duration": getattr(report, "duration", 0.0),
+            "error": error_msg,
         }
 
         if existing:
-            if outcome != 'passed':
+            if outcome != "passed":
                 existing.update(test_data)
         else:
             self.tests.append(test_data)
@@ -130,11 +138,20 @@ def compute_metrics(tests, total_duration):
             "failed": sum(1 for t in tests if t["outcome"] == "failed"),
             "skipped": sum(1 for t in tests if t["outcome"] == "skipped"),
             "duration": total_duration,
-            "success_rate": 0.0
+            "success_rate": 0.0,
         },
-        "levels": {lvl: {
-            "total": 0, "passed": 0, "failed": 0, "skipped": 0, "duration": 0.0, "avg_duration": 0.0, "success_rate": 0.0
-        } for lvl in levels}
+        "levels": {
+            lvl: {
+                "total": 0,
+                "passed": 0,
+                "failed": 0,
+                "skipped": 0,
+                "duration": 0.0,
+                "avg_duration": 0.0,
+                "success_rate": 0.0,
+            }
+            for lvl in levels
+        },
     }
 
     # Calcular tasa de éxito global
@@ -142,7 +159,9 @@ def compute_metrics(tests, total_duration):
     if total > 0:
         active_total = total - metrics["summary"]["skipped"]
         divisor = active_total if active_total > 0 else total
-        metrics["summary"]["success_rate"] = round((metrics["summary"]["passed"] / divisor) * 100, 2)
+        metrics["summary"]["success_rate"] = round(
+            (metrics["summary"]["passed"] / divisor) * 100, 2
+        )
 
     # Agrupar datos por nivel
     for test in tests:
@@ -170,18 +189,32 @@ def print_console_dashboard(metrics):
     levels = metrics["levels"]
 
     print("\n" + "=" * 80)
-    print(color_text("[STATUS] METRICAS DE TESTING POR NIVEL - BIBLIOTECH", Colors.HEADER, bold=True).center(90))
+    print(
+        color_text(
+            "[STATUS] METRICAS DE TESTING POR NIVEL - BIBLIOTECH",
+            Colors.HEADER,
+            bold=True,
+        ).center(90)
+    )
     print("=" * 80)
 
     # Fila de Resumen Global
-    rate_color = Colors.GREEN if summary["success_rate"] >= 95 else (Colors.YELLOW if summary["success_rate"] >= 80 else Colors.RED)
+    rate_color = (
+        Colors.GREEN
+        if summary["success_rate"] >= 95
+        else (Colors.YELLOW if summary["success_rate"] >= 80 else Colors.RED)
+    )
 
-    print(f"  * {color_text('Total Pruebas:', Colors.BOLD)} {summary['total']}   "
-          f"|   {color_text('Pasadas:', Colors.GREEN)} {summary['passed']}   "
-          f"|   {color_text('Fallidas:', Colors.RED)} {summary['failed']}   "
-          f"|   {color_text('Omitidas:', Colors.YELLOW)} {summary['skipped']}")
-    print(f"  * {color_text('Tasa de Exito:', Colors.BOLD)} {color_text(f'{summary['success_rate']}%', rate_color, bold=True)}   "
-          f"|   {color_text('Tiempo Total:', Colors.BOLD)} {summary['duration']:.2f}s")
+    print(
+        f"  * {color_text('Total Pruebas:', Colors.BOLD)} {summary['total']}   "
+        f"|   {color_text('Pasadas:', Colors.GREEN)} {summary['passed']}   "
+        f"|   {color_text('Fallidas:', Colors.RED)} {summary['failed']}   "
+        f"|   {color_text('Omitidas:', Colors.YELLOW)} {summary['skipped']}"
+    )
+    print(
+        f"  * {color_text('Tasa de Exito:', Colors.BOLD)} {color_text(f'{summary['success_rate']}%', rate_color, bold=True)}   "
+        f"|   {color_text('Tiempo Total:', Colors.BOLD)} {summary['duration']:.2f}s"
+    )
     print("-" * 80)
 
     # Cabecera de Tabla
@@ -203,16 +236,22 @@ def print_console_dashboard(metrics):
         raw_failed = f"{data['failed']}"
         raw_skipped = f"{data['skipped']}"
 
-        color_text(raw_passed, Colors.GREEN if data['passed'] > 0 else Colors.ENDC)
-        color_text(raw_failed, Colors.RED if data['failed'] > 0 else Colors.ENDC)
-        color_text(raw_skipped, Colors.YELLOW if data['skipped'] > 0 else Colors.ENDC)
+        color_text(raw_passed, Colors.GREEN if data["passed"] > 0 else Colors.ENDC)
+        color_text(raw_failed, Colors.RED if data["failed"] > 0 else Colors.ENDC)
+        color_text(raw_skipped, Colors.YELLOW if data["skipped"] > 0 else Colors.ENDC)
 
-        lvl_rate_color = Colors.GREEN if data["success_rate"] >= 95 else (Colors.YELLOW if data["success_rate"] >= 80 else Colors.RED)
+        lvl_rate_color = (
+            Colors.GREEN
+            if data["success_rate"] >= 95
+            else (Colors.YELLOW if data["success_rate"] >= 80 else Colors.RED)
+        )
         color_text(f"{data['success_rate']}%", lvl_rate_color, bold=True)
         dur = f"{data['duration']:.2f}s"
 
         # Formatear la fila con strings limpios para alineación
-        print(f"  {lvl_disp:<18} | {total:^7} | {raw_passed:^9} | {raw_failed:^9} | {raw_skipped:^9} | {data['success_rate']:>6}% | {dur:^8}")
+        print(
+            f"  {lvl_disp:<18} | {total:^7} | {raw_passed:^9} | {raw_failed:^9} | {raw_skipped:^9} | {data['success_rate']:>6}% | {dur:^8}"
+        )
 
     print("=" * 80)
 
@@ -232,12 +271,16 @@ def print_console_dashboard(metrics):
         if unit_chars + int_chars + sys_chars < bar_width:
             unit_chars += 1
 
-        bar = (color_text("#" * unit_chars, Colors.BLUE) +
-               color_text("=" * int_chars, Colors.CYAN) +
-               color_text("*" * sys_chars, Colors.GREEN))
+        bar = (
+            color_text("#" * unit_chars, Colors.BLUE)
+            + color_text("=" * int_chars, Colors.CYAN)
+            + color_text("*" * sys_chars, Colors.GREEN)
+        )
 
-        print(f"  {color_text('Distribucion:', Colors.BOLD)} [{bar}]  "
-              f"(Unit: {unit_pct*100:.0f}%, Integ: {int_pct*100:.0f}%, Sist: {sys_pct*100:.0f}%)")
+        print(
+            f"  {color_text('Distribucion:', Colors.BOLD)} [{bar}]  "
+            f"(Unit: {unit_pct*100:.0f}%, Integ: {int_pct*100:.0f}%, Sist: {sys_pct*100:.0f}%)"
+        )
         print("=" * 80 + "\n")
 
 
@@ -1087,23 +1130,41 @@ def generate_html_dashboard(metrics, tests, output_path):
     html_content = html_template
 
     # Datos globales
-    html_content = html_content.replace("__RUN_DATE__", time.strftime('%d/%m/%Y %H:%M:%S'))
-    html_content = html_content.replace("__OS__", f"{platform.system()} ({platform.machine()})")
+    html_content = html_content.replace(
+        "__RUN_DATE__", time.strftime("%d/%m/%Y %H:%M:%S")
+    )
+    html_content = html_content.replace(
+        "__OS__", f"{platform.system()} ({platform.machine()})"
+    )
     html_content = html_content.replace("__PYTHON_VERSION__", platform.python_version())
 
-    html_content = html_content.replace("__SUCCESS_RATE__", str(summary["success_rate"]))
+    html_content = html_content.replace(
+        "__SUCCESS_RATE__", str(summary["success_rate"])
+    )
     html_content = html_content.replace("__TOTAL_TESTS__", str(summary["total"]))
     html_content = html_content.replace("__TOTAL_PASSED__", str(summary["passed"]))
     html_content = html_content.replace("__TOTAL_FAILED__", str(summary["failed"]))
-    html_content = html_content.replace("__TOTAL_DURATION__", f"{summary['duration']:.2f}")
+    html_content = html_content.replace(
+        "__TOTAL_DURATION__", f"{summary['duration']:.2f}"
+    )
 
     avg_dur = (summary["duration"] / total) if total > 0 else 0
     html_content = html_content.replace("__AVG_DURATION__", f"{avg_dur:.3f}")
 
-    rate_color = 'var(--accent-green)' if summary['success_rate'] >= 95 else ('var(--accent-yellow)' if summary['success_rate'] >= 80 else 'var(--accent-red)')
+    rate_color = (
+        "var(--accent-green)"
+        if summary["success_rate"] >= 95
+        else (
+            "var(--accent-yellow)"
+            if summary["success_rate"] >= 80
+            else "var(--accent-red)"
+        )
+    )
     html_content = html_content.replace("__RATE_COLOR__", rate_color)
 
-    fail_color = 'var(--accent-red)' if summary['failed'] > 0 else 'var(--text-secondary)'
+    fail_color = (
+        "var(--accent-red)" if summary["failed"] > 0 else "var(--text-secondary)"
+    )
     html_content = html_content.replace("__FAIL_VAL_COLOR__", fail_color)
 
     # Detalle por nivel: Unitario
@@ -1115,14 +1176,28 @@ def generate_html_dashboard(metrics, tests, output_path):
     html_content = html_content.replace("__UNIT_FAILED__", str(unit["failed"]))
     html_content = html_content.replace("__UNIT_SKIPPED__", str(unit["skipped"]))
     html_content = html_content.replace("__UNIT_DURATION__", f"{unit['duration']:.3f}")
-    html_content = html_content.replace("__UNIT_AVG_DURATION__", f"{unit['avg_duration']:.4f}")
-    html_content = html_content.replace("__UNIT_PASSED_PERCENT__", str((unit["passed"] / unit_div) * 100))
-    html_content = html_content.replace("__UNIT_FAILED_PERCENT__", str((unit["failed"] / unit_div) * 100))
-    html_content = html_content.replace("__UNIT_SKIPPED_PERCENT__", str((unit["skipped"] / unit_div) * 100))
+    html_content = html_content.replace(
+        "__UNIT_AVG_DURATION__", f"{unit['avg_duration']:.4f}"
+    )
+    html_content = html_content.replace(
+        "__UNIT_PASSED_PERCENT__", str((unit["passed"] / unit_div) * 100)
+    )
+    html_content = html_content.replace(
+        "__UNIT_FAILED_PERCENT__", str((unit["failed"] / unit_div) * 100)
+    )
+    html_content = html_content.replace(
+        "__UNIT_SKIPPED_PERCENT__", str((unit["skipped"] / unit_div) * 100)
+    )
 
-    u_rate_class = 'success' if unit['success_rate'] >= 95 else ('warn' if unit['success_rate'] >= 80 else 'fail')
+    u_rate_class = (
+        "success"
+        if unit["success_rate"] >= 95
+        else ("warn" if unit["success_rate"] >= 80 else "fail")
+    )
     html_content = html_content.replace("__UNIT_RATE_COLOR_CLASS__", u_rate_class)
-    u_fail_color = 'var(--accent-red)' if unit['failed'] > 0 else 'var(--text-secondary)'
+    u_fail_color = (
+        "var(--accent-red)" if unit["failed"] > 0 else "var(--text-secondary)"
+    )
     html_content = html_content.replace("__UNIT_FAIL_VAL_COLOR__", u_fail_color)
 
     # Detalle por nivel: Integración
@@ -1134,14 +1209,28 @@ def generate_html_dashboard(metrics, tests, output_path):
     html_content = html_content.replace("__INT_FAILED__", str(integ["failed"]))
     html_content = html_content.replace("__INT_SKIPPED__", str(integ["skipped"]))
     html_content = html_content.replace("__INT_DURATION__", f"{integ['duration']:.3f}")
-    html_content = html_content.replace("__INT_AVG_DURATION__", f"{integ['avg_duration']:.4f}")
-    html_content = html_content.replace("__INT_PASSED_PERCENT__", str((integ["passed"] / integ_div) * 100))
-    html_content = html_content.replace("__INT_FAILED_PERCENT__", str((integ["failed"] / integ_div) * 100))
-    html_content = html_content.replace("__INT_SKIPPED_PERCENT__", str((integ["skipped"] / integ_div) * 100))
+    html_content = html_content.replace(
+        "__INT_AVG_DURATION__", f"{integ['avg_duration']:.4f}"
+    )
+    html_content = html_content.replace(
+        "__INT_PASSED_PERCENT__", str((integ["passed"] / integ_div) * 100)
+    )
+    html_content = html_content.replace(
+        "__INT_FAILED_PERCENT__", str((integ["failed"] / integ_div) * 100)
+    )
+    html_content = html_content.replace(
+        "__INT_SKIPPED_PERCENT__", str((integ["skipped"] / integ_div) * 100)
+    )
 
-    i_rate_class = 'success' if integ['success_rate'] >= 95 else ('warn' if integ['success_rate'] >= 80 else 'fail')
+    i_rate_class = (
+        "success"
+        if integ["success_rate"] >= 95
+        else ("warn" if integ["success_rate"] >= 80 else "fail")
+    )
     html_content = html_content.replace("__INT_RATE_COLOR_CLASS__", i_rate_class)
-    i_fail_color = 'var(--accent-red)' if integ['failed'] > 0 else 'var(--text-secondary)'
+    i_fail_color = (
+        "var(--accent-red)" if integ["failed"] > 0 else "var(--text-secondary)"
+    )
     html_content = html_content.replace("__INT_FAIL_VAL_COLOR__", i_fail_color)
 
     # Detalle por nivel: Sistema
@@ -1153,14 +1242,28 @@ def generate_html_dashboard(metrics, tests, output_path):
     html_content = html_content.replace("__SYS_FAILED__", str(syst["failed"]))
     html_content = html_content.replace("__SYS_SKIPPED__", str(syst["skipped"]))
     html_content = html_content.replace("__SYS_DURATION__", f"{syst['duration']:.3f}")
-    html_content = html_content.replace("__SYS_AVG_DURATION__", f"{syst['avg_duration']:.4f}")
-    html_content = html_content.replace("__SYS_PASSED_PERCENT__", str((syst["passed"] / syst_div) * 100))
-    html_content = html_content.replace("__SYS_FAILED_PERCENT__", str((syst["failed"] / syst_div) * 100))
-    html_content = html_content.replace("__SYS_SKIPPED_PERCENT__", str((syst["skipped"] / syst_div) * 100))
+    html_content = html_content.replace(
+        "__SYS_AVG_DURATION__", f"{syst['avg_duration']:.4f}"
+    )
+    html_content = html_content.replace(
+        "__SYS_PASSED_PERCENT__", str((syst["passed"] / syst_div) * 100)
+    )
+    html_content = html_content.replace(
+        "__SYS_FAILED_PERCENT__", str((syst["failed"] / syst_div) * 100)
+    )
+    html_content = html_content.replace(
+        "__SYS_SKIPPED_PERCENT__", str((syst["skipped"] / syst_div) * 100)
+    )
 
-    s_rate_class = 'success' if syst['success_rate'] >= 95 else ('warn' if syst['success_rate'] >= 80 else 'fail')
+    s_rate_class = (
+        "success"
+        if syst["success_rate"] >= 95
+        else ("warn" if syst["success_rate"] >= 80 else "fail")
+    )
     html_content = html_content.replace("__SYS_RATE_COLOR_CLASS__", s_rate_class)
-    s_fail_color = 'var(--accent-red)' if syst['failed'] > 0 else 'var(--text-secondary)'
+    s_fail_color = (
+        "var(--accent-red)" if syst["failed"] > 0 else "var(--text-secondary)"
+    )
     html_content = html_content.replace("__SYS_FAIL_VAL_COLOR__", s_fail_color)
 
     # Inyección de JSON de pruebas
@@ -1184,7 +1287,13 @@ def main():
         open_browser = False
         args.remove("--no-open")
 
-    print(color_text("\n[INFO] Iniciando suite de pruebas de BiblioTech con Pytest...", Colors.BLUE, bold=True))
+    print(
+        color_text(
+            "\n[INFO] Iniciando suite de pruebas de BiblioTech con Pytest...",
+            Colors.BLUE,
+            bold=True,
+        )
+    )
 
     # Configurar nuestro plugin collector
     collector = TestMetricsCollector()
@@ -1195,7 +1304,13 @@ def main():
 
     # Si no se ejecutó ninguna prueba, avisar
     if not collector.tests:
-        print(color_text("\n[WARN] No se recolectaron resultados de pruebas. Verifique los parametros pasados.", Colors.YELLOW, bold=True))
+        print(
+            color_text(
+                "\n[WARN] No se recolectaron resultados de pruebas. Verifique los parametros pasados.",
+                Colors.YELLOW,
+                bold=True,
+            )
+        )
         sys.exit(exit_code)
 
     # Calcular métricas
@@ -1211,11 +1326,22 @@ def main():
     # Generar reporte HTML
     try:
         generate_html_dashboard(metrics, collector.tests, report_path)
-        print(color_text("✨ Reporte interactivo detallado generado con exito en:", Colors.GREEN, bold=True))
+        print(
+            color_text(
+                "✨ Reporte interactivo detallado generado con exito en:",
+                Colors.GREEN,
+                bold=True,
+            )
+        )
         print(color_text(f"   {report_path.as_uri()}", Colors.CYAN, bold=True))
 
         if open_browser:
-            print(color_text("🌍 Abriendo el reporte interactivo en su navegador predeterminado...", Colors.BLUE))
+            print(
+                color_text(
+                    "🌍 Abriendo el reporte interactivo en su navegador predeterminado...",
+                    Colors.BLUE,
+                )
+            )
             webbrowser.open(report_path.as_uri())
     except Exception as e:
         print(color_text(f"❌ Error al generar el reporte HTML: {e}", Colors.RED))
