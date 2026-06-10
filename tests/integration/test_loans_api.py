@@ -75,13 +75,20 @@ class TestLoansAPI:
         assert response.status_code == 409
 
     def test_list_loans(self, auth_client, created_book, created_user):
-        auth_client.post(
+        loan = auth_client.post(
             "/api/v1/loans/",
             json={"user_id": created_user["id"], "book_id": created_book["id"]},
-        )
+        ).json()
         response = auth_client.get("/api/v1/loans/")
         assert response.status_code == 200
-        assert len(response.json()) == 1
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == loan["id"]
+        assert data[0]["user_id"] == created_user["id"]
+        assert data[0]["book_id"] == created_book["id"]
+        assert data[0]["status"] == "active"
+        assert data[0]["user_name"] == created_user["name"]
+        assert data[0]["book_title"] == created_book["title"]
 
     def test_list_loans_filter_status(self, auth_client, created_book, created_user):
         loan = auth_client.post(
@@ -93,3 +100,62 @@ class TestLoansAPI:
         returned = auth_client.get("/api/v1/loans/?status=returned").json()
         assert len(active) == 0
         assert len(returned) == 1
+        assert returned[0]["id"] == loan["id"]
+        assert returned[0]["status"] == "returned"
+
+    def test_list_loans_filter_user_id(self, auth_client, created_book, created_user):
+        loan = auth_client.post(
+            "/api/v1/loans/",
+            json={"user_id": created_user["id"], "book_id": created_book["id"]},
+        ).json()
+        
+        # Create user 2 and book 2 to have another loan
+        user2 = auth_client.post("/api/v1/users/", json={"name": "User 2", "email": "u2@email.com"}).json()
+        book2 = auth_client.post("/api/v1/books/", json={
+            "title": "Clean Code II",
+            "author": "Robert C. Martin",
+            "isbn": "9780132350886",
+            "quantity": 2,
+        }).json()
+        loan2 = auth_client.post(
+            "/api/v1/loans/",
+            json={"user_id": user2["id"], "book_id": book2["id"]},
+        ).json()
+        
+        response = auth_client.get(f"/api/v1/loans/?user_id={created_user['id']}")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == loan["id"]
+        assert data[0]["user_id"] == created_user["id"]
+
+    def test_list_loans_filter_book_id(self, auth_client, created_book, created_user):
+        loan = auth_client.post(
+            "/api/v1/loans/",
+            json={"user_id": created_user["id"], "book_id": created_book["id"]},
+        ).json()
+        
+        user2 = auth_client.post("/api/v1/users/", json={"name": "User 2", "email": "u2@email.com"}).json()
+        book2 = auth_client.post("/api/v1/books/", json={
+            "title": "Clean Code II",
+            "author": "Robert C. Martin",
+            "isbn": "9780132350886",
+            "quantity": 2,
+        }).json()
+        loan2 = auth_client.post(
+            "/api/v1/loans/",
+            json={"user_id": user2["id"], "book_id": book2["id"]},
+        ).json()
+        
+        response = auth_client.get(f"/api/v1/loans/?book_id={created_book['id']}")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == loan["id"]
+        assert data[0]["book_id"] == created_book["id"]
+
+    def test_check_overdue_endpoint(self, auth_client):
+        # We call the post endpoint. It returns a JSON with overdue_count.
+        response = auth_client.post("/api/v1/loans/check-overdue")
+        assert response.status_code == 200
+        assert "overdue_count" in response.json()

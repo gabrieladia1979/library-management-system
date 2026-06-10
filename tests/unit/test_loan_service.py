@@ -106,12 +106,60 @@ class TestLoanService:
         book1 = self._create_book(db_session, isbn="1111111111")
         book2 = self._create_book(db_session, isbn="2222222222")
         loan1 = loan_service.borrow_book(db_session, user.id, book1.id)
-        loan_service.borrow_book(db_session, user.id, book2.id)
+        loan2 = loan_service.borrow_book(db_session, user.id, book2.id)
         loan_service.return_book(db_session, loan1.id)
+        
         active = loan_service.get_loans(db_session, status_filter="active")
         returned = loan_service.get_loans(db_session, status_filter="returned")
+        
         assert len(active) == 1
+        assert active[0].id == loan2.id
+        assert active[0].status == "active"
+        
         assert len(returned) == 1
+        assert returned[0].id == loan1.id
+        assert returned[0].status == "returned"
+
+    def test_get_loans_all(self, db_session):
+        user = self._create_user(db_session)
+        book1 = self._create_book(db_session, isbn="1111111111")
+        book2 = self._create_book(db_session, isbn="2222222222")
+        loan1 = loan_service.borrow_book(db_session, user.id, book1.id)
+        loan2 = loan_service.borrow_book(db_session, user.id, book2.id)
+        
+        loans = loan_service.get_loans(db_session)
+        assert len(loans) == 2
+        # Loans are ordered by loan_date desc, so loan2 is first
+        assert loans[0].id == loan2.id
+        assert loans[1].id == loan1.id
+
+    def test_get_loans_filter_by_user_id(self, db_session):
+        u1 = self._create_user(db_session, name="User 1", email="u1@email.com")
+        u2 = self._create_user(db_session, name="User 2", email="u2@email.com")
+        book = self._create_book(db_session)
+        loan1 = loan_service.borrow_book(db_session, u1.id, book.id)
+        
+        # Borrow book for u2 (need to make sure book has copies available)
+        book.available_copies = 1
+        db_session.commit()
+        loan2 = loan_service.borrow_book(db_session, u2.id, book.id)
+        
+        user1_loans = loan_service.get_loans(db_session, user_id=u1.id)
+        assert len(user1_loans) == 1
+        assert user1_loans[0].id == loan1.id
+        assert user1_loans[0].user_id == u1.id
+
+    def test_get_loans_filter_by_book_id(self, db_session):
+        user = self._create_user(db_session)
+        book1 = self._create_book(db_session, isbn="1111111111")
+        book2 = self._create_book(db_session, isbn="2222222222")
+        loan1 = loan_service.borrow_book(db_session, user.id, book1.id)
+        loan2 = loan_service.borrow_book(db_session, user.id, book2.id)
+        
+        book1_loans = loan_service.get_loans(db_session, book_id=book1.id)
+        assert len(book1_loans) == 1
+        assert book1_loans[0].id == loan1.id
+        assert book1_loans[0].book_id == book1.id
 
     def test_check_overdue_loans(self, db_session):
         user = self._create_user(db_session)
