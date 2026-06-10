@@ -23,10 +23,28 @@ class TestUsersAPI:
         assert response.status_code == 422
 
     def test_list_users(self, auth_client, sample_user):
-        auth_client.post("/api/v1/users/", json=sample_user)
+        created = auth_client.post("/api/v1/users/", json=sample_user).json()
         response = auth_client.get("/api/v1/users/")
         assert response.status_code == 200
-        assert len(response.json()) == 1
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == created["id"]
+        assert data[0]["name"] == created["name"]
+        assert data[0]["email"] == created["email"]
+
+    def test_list_users_search_email(self, auth_client, sample_user):
+        auth_client.post("/api/v1/users/", json=sample_user).json()
+        u2 = auth_client.post(
+            "/api/v1/users/",
+            json={"name": "Alice Smith", "email": "alice@email.com"},
+        ).json()
+
+        response = auth_client.get("/api/v1/users/?search=alice@email.com")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["id"] == u2["id"]
+        assert data[0]["email"] == u2["email"]
 
     def test_get_user(self, auth_client, created_user):
         response = auth_client.get(f"/api/v1/users/{created_user['id']}")
@@ -44,6 +62,13 @@ class TestUsersAPI:
         )
         assert response.status_code == 200
         assert response.json()["name"] == "Updated Name"
+
+    def test_update_user_not_found(self, auth_client):
+        response = auth_client.put(
+            "/api/v1/users/999",
+            json={"name": "New Name"},
+        )
+        assert response.status_code == 404
 
     def test_deactivate_user(self, auth_client, created_user):
         response = auth_client.put(f"/api/v1/users/{created_user['id']}/deactivate")

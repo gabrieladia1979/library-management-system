@@ -30,16 +30,20 @@ class TestBookService:
         assert exc_info.value.status_code == 409
 
     def test_get_books_all(self, db_session):
-        book_service.create_book(
+        b1 = book_service.create_book(
             db_session,
             BookCreate(title="Book A", author="Author A", isbn="1111111111"),
         )
-        book_service.create_book(
+        b2 = book_service.create_book(
             db_session,
             BookCreate(title="Book B", author="Author B", isbn="2222222222"),
         )
         books = book_service.get_books(db_session)
         assert len(books) == 2
+        assert books[0].id == b1.id
+        assert books[0].title == "Book A"
+        assert books[1].id == b2.id
+        assert books[1].title == "Book B"
 
     def test_get_books_search(self, db_session):
         book_service.create_book(
@@ -53,6 +57,44 @@ class TestBookService:
         results = book_service.get_books(db_session, search="Python")
         assert len(results) == 1
         assert results[0].title == "Python Guide"
+
+    def test_get_books_filter_genre(self, db_session):
+        book_service.create_book(
+            db_session,
+            BookCreate(
+                title="Book 1", author="Author A", isbn="1111111111", genre="Sci-Fi"
+            ),
+        )
+        book_service.create_book(
+            db_session,
+            BookCreate(
+                title="Book 2", author="Author B", isbn="2222222222", genre="Fantasy"
+            ),
+        )
+        results = book_service.get_books(db_session, genre="Sci-Fi")
+        assert len(results) == 1
+        assert results[0].title == "Book 1"
+        assert results[0].genre == "Sci-Fi"
+
+    def test_get_books_filter_available_only(self, db_session):
+        b1 = book_service.create_book(
+            db_session,
+            BookCreate(
+                title="Book 1", author="Author A", isbn="1111111111", quantity=1
+            ),
+        )
+        b1.available_copies = 0
+        db_session.commit()
+        b2 = book_service.create_book(
+            db_session,
+            BookCreate(
+                title="Book 2", author="Author B", isbn="2222222222", quantity=2
+            ),
+        )
+        results = book_service.get_books(db_session, available_only=True)
+        assert len(results) == 1
+        assert results[0].id == b2.id
+        assert results[0].available_copies == 2
 
     def test_get_book_success(self, db_session):
         created = book_service.create_book(
@@ -77,6 +119,35 @@ class TestBookService:
         )
         assert updated.title == "New Title"
         assert updated.author == "Author"  # Unchanged
+
+    def test_update_book_quantity(self, db_session):
+        created = book_service.create_book(
+            db_session,
+            BookCreate(
+                title="Test Book", author="Author", isbn="1234567890", quantity=2
+            ),
+        )
+        assert created.quantity == 2
+        assert created.available_copies == 2
+
+        # Increase quantity
+        updated = book_service.update_book(
+            db_session, created.id, BookUpdate(quantity=5)
+        )
+        assert updated.quantity == 5
+        assert updated.available_copies == 5
+
+        # Decrease quantity
+        updated2 = book_service.update_book(
+            db_session, created.id, BookUpdate(quantity=3)
+        )
+        assert updated2.quantity == 3
+        assert updated2.available_copies == 3
+
+    def test_update_book_not_found(self, db_session):
+        with pytest.raises(HTTPException) as exc_info:
+            book_service.update_book(db_session, 999, BookUpdate(title="New Title"))
+        assert exc_info.value.status_code == 404
 
     def test_delete_book_success(self, db_session):
         created = book_service.create_book(
