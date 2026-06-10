@@ -44,7 +44,7 @@ class TestBooksAPI:
         assert len(response.json()) == 0
 
     def test_list_books_filter_genre(self, auth_client, sample_book):
-        b1 = auth_client.post("/api/v1/books/", json=sample_book).json()
+        auth_client.post("/api/v1/books/", json=sample_book).json()
         b2_data = sample_book.copy()
         b2_data["title"] = "Refactoring"
         b2_data["isbn"] = "9780201485677"
@@ -67,8 +67,12 @@ class TestBooksAPI:
         b2_data["quantity"] = 1
         b2 = auth_client.post("/api/v1/books/", json=b2_data).json()
 
-        user = auth_client.post("/api/v1/users/", json={"name": "User 1", "email": "u1@email.com"}).json()
-        auth_client.post("/api/v1/loans/", json={"user_id": user["id"], "book_id": b2["id"]})
+        user = auth_client.post(
+            "/api/v1/users/", json={"name": "User 1", "email": "u1@email.com"}
+        ).json()
+        auth_client.post(
+            "/api/v1/loans/", json={"user_id": user["id"], "book_id": b2["id"]}
+        )
 
         response = auth_client.get("/api/v1/books/?available_only=true")
         assert response.status_code == 200

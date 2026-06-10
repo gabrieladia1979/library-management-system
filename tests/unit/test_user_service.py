@@ -41,7 +41,7 @@ class TestUserService:
         u1 = user_service.create_user(
             db_session, UserCreate(name="Alice Smith", email="alice@email.com")
         )
-        u2 = user_service.create_user(
+        user_service.create_user(
             db_session, UserCreate(name="Bob Jones", email="bob@email.com")
         )
         results = user_service.get_users(db_session, search="Alice")
@@ -50,7 +50,7 @@ class TestUserService:
         assert results[0].name == "Alice Smith"
 
     def test_get_users_search_email(self, db_session):
-        u1 = user_service.create_user(
+        user_service.create_user(
             db_session, UserCreate(name="Alice Smith", email="alice@email.com")
         )
         u2 = user_service.create_user(
@@ -78,9 +78,7 @@ class TestUserService:
 
     def test_update_user_not_found(self, db_session):
         with pytest.raises(HTTPException) as exc_info:
-            user_service.update_user(
-                db_session, 999, UserUpdate(name="New Name")
-            )
+            user_service.update_user(db_session, 999, UserUpdate(name="New Name"))
         assert exc_info.value.status_code == 404
 
     def test_deactivate_user_success(self, db_session):
@@ -94,7 +92,7 @@ class TestUserService:
     def test_deactivate_user_with_active_loans_fails(self, db_session):
         from app.models.book import Book
         from app.services import loan_service
-        
+
         user = user_service.create_user(
             db_session, UserCreate(name="Test User", email="test@email.com")
         )
@@ -108,9 +106,9 @@ class TestUserService:
         db_session.add(book)
         db_session.commit()
         db_session.refresh(book)
-        
+
         loan_service.borrow_book(db_session, user.id, book.id)
-        
+
         with pytest.raises(HTTPException) as exc_info:
             user_service.deactivate_user(db_session, user.id)
         assert exc_info.value.status_code == 409

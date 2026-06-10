@@ -108,20 +108,25 @@ class TestLoansAPI:
             "/api/v1/loans/",
             json={"user_id": created_user["id"], "book_id": created_book["id"]},
         ).json()
-        
+
         # Create user 2 and book 2 to have another loan
-        user2 = auth_client.post("/api/v1/users/", json={"name": "User 2", "email": "u2@email.com"}).json()
-        book2 = auth_client.post("/api/v1/books/", json={
-            "title": "Clean Code II",
-            "author": "Robert C. Martin",
-            "isbn": "9780132350886",
-            "quantity": 2,
-        }).json()
-        loan2 = auth_client.post(
+        user2 = auth_client.post(
+            "/api/v1/users/", json={"name": "User 2", "email": "u2@email.com"}
+        ).json()
+        book2 = auth_client.post(
+            "/api/v1/books/",
+            json={
+                "title": "Clean Code II",
+                "author": "Robert C. Martin",
+                "isbn": "9780132350886",
+                "quantity": 2,
+            },
+        ).json()
+        auth_client.post(
             "/api/v1/loans/",
             json={"user_id": user2["id"], "book_id": book2["id"]},
         ).json()
-        
+
         response = auth_client.get(f"/api/v1/loans/?user_id={created_user['id']}")
         assert response.status_code == 200
         data = response.json()
@@ -134,19 +139,24 @@ class TestLoansAPI:
             "/api/v1/loans/",
             json={"user_id": created_user["id"], "book_id": created_book["id"]},
         ).json()
-        
-        user2 = auth_client.post("/api/v1/users/", json={"name": "User 2", "email": "u2@email.com"}).json()
-        book2 = auth_client.post("/api/v1/books/", json={
-            "title": "Clean Code II",
-            "author": "Robert C. Martin",
-            "isbn": "9780132350886",
-            "quantity": 2,
-        }).json()
-        loan2 = auth_client.post(
+
+        user2 = auth_client.post(
+            "/api/v1/users/", json={"name": "User 2", "email": "u2@email.com"}
+        ).json()
+        book2 = auth_client.post(
+            "/api/v1/books/",
+            json={
+                "title": "Clean Code II",
+                "author": "Robert C. Martin",
+                "isbn": "9780132350886",
+                "quantity": 2,
+            },
+        ).json()
+        auth_client.post(
             "/api/v1/loans/",
             json={"user_id": user2["id"], "book_id": book2["id"]},
         ).json()
-        
+
         response = auth_client.get(f"/api/v1/loans/?book_id={created_book['id']}")
         assert response.status_code == 200
         data = response.json()

@@ -33,12 +33,12 @@ class TestUsersAPI:
         assert data[0]["email"] == created["email"]
 
     def test_list_users_search_email(self, auth_client, sample_user):
-        u1 = auth_client.post("/api/v1/users/", json=sample_user).json()
+        auth_client.post("/api/v1/users/", json=sample_user).json()
         u2 = auth_client.post(
             "/api/v1/users/",
             json={"name": "Alice Smith", "email": "alice@email.com"},
         ).json()
-        
+
         response = auth_client.get("/api/v1/users/?search=alice@email.com")
         assert response.status_code == 200
         data = response.json()

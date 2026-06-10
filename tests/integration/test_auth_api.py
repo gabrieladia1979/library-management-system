@@ -44,21 +44,27 @@ class TestAuthAPI:
 
     def test_create_access_token_default_expiry(self):
         """Test create_access_token without expires_delta works."""
-        from app.api.v1.endpoints.auth import create_access_token
         from jose import jwt
+
+        from app.api.v1.endpoints.auth import create_access_token
         from app.core.config import settings
 
         token = create_access_token(data={"sub": "test"})
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         assert payload["sub"] == "test"
         assert "exp" in payload
 
     def test_protected_endpoint_missing_sub_claim(self, client):
         """Test accessing a protected endpoint with a token lacking 'sub' claim fails."""
         from jose import jwt
+
         from app.core.config import settings
 
-        token = jwt.encode({"user": "admin"}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+        token = jwt.encode(
+            {"user": "admin"}, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+        )
         response = client.get(
             "/api/v1/books/",
             headers={"Authorization": f"Bearer {token}"},
@@ -68,9 +74,12 @@ class TestAuthAPI:
     def test_protected_endpoint_non_admin_sub(self, client):
         """Test accessing a protected endpoint with a token where 'sub' is not 'admin' fails."""
         from jose import jwt
+
         from app.core.config import settings
 
-        token = jwt.encode({"sub": "normal_user"}, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+        token = jwt.encode(
+            {"sub": "normal_user"}, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+        )
         response = client.get(
             "/api/v1/books/",
             headers={"Authorization": f"Bearer {token}"},

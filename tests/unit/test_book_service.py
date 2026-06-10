@@ -61,11 +61,15 @@ class TestBookService:
     def test_get_books_filter_genre(self, db_session):
         book_service.create_book(
             db_session,
-            BookCreate(title="Book 1", author="Author A", isbn="1111111111", genre="Sci-Fi"),
+            BookCreate(
+                title="Book 1", author="Author A", isbn="1111111111", genre="Sci-Fi"
+            ),
         )
         book_service.create_book(
             db_session,
-            BookCreate(title="Book 2", author="Author B", isbn="2222222222", genre="Fantasy"),
+            BookCreate(
+                title="Book 2", author="Author B", isbn="2222222222", genre="Fantasy"
+            ),
         )
         results = book_service.get_books(db_session, genre="Sci-Fi")
         assert len(results) == 1
@@ -75,13 +79,17 @@ class TestBookService:
     def test_get_books_filter_available_only(self, db_session):
         b1 = book_service.create_book(
             db_session,
-            BookCreate(title="Book 1", author="Author A", isbn="1111111111", quantity=1),
+            BookCreate(
+                title="Book 1", author="Author A", isbn="1111111111", quantity=1
+            ),
         )
         b1.available_copies = 0
         db_session.commit()
         b2 = book_service.create_book(
             db_session,
-            BookCreate(title="Book 2", author="Author B", isbn="2222222222", quantity=2),
+            BookCreate(
+                title="Book 2", author="Author B", isbn="2222222222", quantity=2
+            ),
         )
         results = book_service.get_books(db_session, available_only=True)
         assert len(results) == 1
@@ -115,18 +123,20 @@ class TestBookService:
     def test_update_book_quantity(self, db_session):
         created = book_service.create_book(
             db_session,
-            BookCreate(title="Test Book", author="Author", isbn="1234567890", quantity=2),
+            BookCreate(
+                title="Test Book", author="Author", isbn="1234567890", quantity=2
+            ),
         )
         assert created.quantity == 2
         assert created.available_copies == 2
-        
+
         # Increase quantity
         updated = book_service.update_book(
             db_session, created.id, BookUpdate(quantity=5)
         )
         assert updated.quantity == 5
         assert updated.available_copies == 5
-        
+
         # Decrease quantity
         updated2 = book_service.update_book(
             db_session, created.id, BookUpdate(quantity=3)
@@ -136,9 +146,7 @@ class TestBookService:
 
     def test_update_book_not_found(self, db_session):
         with pytest.raises(HTTPException) as exc_info:
-            book_service.update_book(
-                db_session, 999, BookUpdate(title="New Title")
-            )
+            book_service.update_book(db_session, 999, BookUpdate(title="New Title"))
         assert exc_info.value.status_code == 404
 
     def test_delete_book_success(self, db_session):
